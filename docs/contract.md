@@ -22,20 +22,21 @@ that makes no sense for a stack is a no-op command, so the required-check list n
 
 Branch protection requires exactly these six, on the default branch, with `strict: true`:
 
-| Check | Reusable workflow | Caller job `name` |
+| Required context | Reusable workflow | Caller job `name` |
 | --- | --- | --- |
-| Lint | `lint.yml` | `Lint` |
-| Unit tests + build | `test-build.yml` | `Unit tests + build` |
-| Mutation testing | `mutation.yml` | `Mutation testing` |
-| Bundle size | `size.yml` | `Bundle size` |
-| Dependency audit | `audit.yml` | `Dependency audit` |
-| End-to-end | `e2e.yml` | `End-to-end` |
+| `Lint / lint` | `lint.yml` | `Lint` |
+| `Unit tests + build / test` | `test-build.yml` | `Unit tests + build` |
+| `Mutation testing / mutation` | `mutation.yml` | `Mutation testing` |
+| `Bundle size / size` | `size.yml` | `Bundle size` |
+| `Dependency audit / audit` | `audit.yml` | `Dependency audit` |
+| `End-to-end / e2e` | `e2e.yml` | `End-to-end` |
 
-**Context strings are unverified.** GitHub reports a reusable-workflow job as
-`<caller job name> / <called job id>`, for example `Lint / lint`, not plain `Lint`. weekly-routine
-requires the plain names today. The M1 spike confirms the real strings on a first run, and this
-table is then updated with the exact required contexts. Until then, treat the left column as the
-check's identity and the contexts as TBD.
+GitHub reports a reusable-workflow job as `<caller job name> / <called job id>`, so the contexts
+are not the plain names weekly-routine requires today (`Lint`, `Unit tests + build`, ...). The
+caller job `name` values above and the job ids in the reusable workflows are therefore part of
+the contract: renaming either changes the required context. Confirmed on a spike repo for
+`Lint / lint` and `Unit tests + build / test`; the other four follow the same rule from their job
+ids and are confirmed when weekly-routine is converted (M3).
 
 ## Caller rules
 
