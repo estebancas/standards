@@ -1,0 +1,41 @@
+name: Dependency audit
+
+on:
+  workflow_call:
+    inputs:
+      node-version-file:
+        type: string
+        default: .nvmrc
+      # Optional non-blocking full audit (including devDependencies). Useful while a dev-only
+      # advisory has no fix; switch it off once dev advisories clear.
+      audit-dev:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+          cache: npm
+      # `npm audit` needs no install; it reads the lockfile.
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit dev dependencies (non-blocking)
+        if: inputs.audit-dev
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      # `npm audit signatures` verifies installed packages, so it does need an install.
+      - run: npm ci
+      - run: npm audit signatures
+      # github.event_name is the caller's event.
+      - if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5
+        with:
+          fail-on-severity: high

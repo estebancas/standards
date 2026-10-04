@@ -1,0 +1,61 @@
+name: Lint
+
+on:
+  workflow_call:
+    inputs:
+      node-version-file:
+        type: string
+        default: .nvmrc
+      lint-command:
+        type: string
+        default: npm run lint
+      # Optional "tool exercised nowhere else" check: regenerate committed assets and fail
+      # if the working tree under `generated-assets-path` differs afterwards (diffs and
+      # untracked files). Leave `generated-assets-command` empty to skip it.
+      generated-assets-command:
+        type: string
+        default: ""
+      generated-assets-path:
+        type: string
+        default: ""
+      # Newline-separated paths or globs that must exist and be non-empty after regeneration.
+      generated-assets-required-files:
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        env:
+          COMMAND: ${{ inputs.lint-command }}
+        run: eval "$COMMAND"
+      - name: Generated assets regenerate cleanly
+        if: inputs.generated-assets-command != ''
+        env:
+          COMMAND: ${{ inputs.generated-assets-command }}
+          ASSETS_PATH: ${{ inputs.generated-assets-path }}
+          REQUIRED_FILES: ${{ inputs.generated-assets-required-files }}
+        run: |
+          test -n "$ASSETS_PATH" || { echo "generated-assets-path is required with generated-assets-command"; exit 1; }
+          eval "$COMMAND"
+          while IFS= read -r pattern; do
+            [ -z "$pattern" ] && continue
+            matches=$(compgen -G "$pattern" || true)
+            [ -n "$matches" ] || { echo "missing: $pattern"; exit 1; }
+            for f in $matches; do
+              test -s "$f" || { echo "empty: $f"; exit 1; }
+            done
+          done <<< "$REQUIRED_FILES"
+          # --porcelain also catches untracked files (e.g. a new size added upstream).
+          test -z "$(git status --porcelain -- "$ASSETS_PATH")" || { git status --short -- "$ASSETS_PATH"; git diff -- "$ASSETS_PATH"; exit 1; }

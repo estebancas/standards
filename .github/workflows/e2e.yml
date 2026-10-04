@@ -1,0 +1,56 @@
+name: End-to-end
+
+on:
+  workflow_call:
+    inputs:
+      # Required. Pin to the installed @playwright/test version (for example
+      # mcr.microsoft.com/playwright:v1.63.0-noble) so the preinstalled browsers and fonts match
+      # `npm ci` and visual baselines committed from the same image render identically.
+      container-image:
+        type: string
+        required: true
+      node-version-file:
+        type: string
+        default: .nvmrc
+      e2e-command:
+        type: string
+        default: npm run e2e
+      dist-path:
+        type: string
+        default: dist
+      report-path:
+        type: string
+        default: playwright-report
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.container-image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # No "skip if no config" step: a project without Playwright config must fail this check
+      # rather than pass silently.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+          cache: npm
+      - run: npm ci
+      # Artifact produced by test-build.yml in the same run; the caller must `needs` that job.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: dist
+          path: ${{ inputs.dist-path }}
+      - name: End-to-end
+        env:
+          COMMAND: ${{ inputs.e2e-command }}
+        run: eval "$COMMAND"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report
+          path: ${{ inputs.report-path }}
+          retention-days: 7
