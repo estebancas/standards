@@ -9,8 +9,15 @@ implementation. See `docs/contract.md` for what every project exposes and what C
    is created.
 2. **Reusable workflows** (this repo, `.github/workflows/`): CI logic that keeps improving.
    Projects call them pinned by commit SHA, and Dependabot proposes bumps as PRs.
-3. **Settings script** (`scripts/apply-repo-settings.sh`, coming in M2): branch protection and
-   other GitHub-only settings, with `apply` and `verify` modes.
+3. **Settings script** (`scripts/apply-repo-settings.sh`): branch protection and other
+   GitHub-only settings, with `apply` and `verify` modes. Needs `gh` (admin on the repo) and `jq`.
+
+```sh
+scripts/apply-repo-settings.sh verify owner/repo   # read-only, exits 1 on drift
+scripts/apply-repo-settings.sh apply  owner/repo   # idempotent
+# A repo that has no CI yet, or still uses the old plain check names:
+scripts/apply-repo-settings.sh verify owner/repo --checks "Lint,Unit tests + build"
+```
 
 ## Reusable workflows
 
