@@ -15,6 +15,8 @@ implementation. See `docs/contract.md` for what every project exposes and what C
 ```sh
 scripts/apply-repo-settings.sh verify owner/repo   # read-only, exits 1 on drift
 scripts/apply-repo-settings.sh apply  owner/repo   # idempotent
+# Migrating check names: make the required checks exactly the --checks list
+scripts/apply-repo-settings.sh apply  owner/repo --replace-checks
 # A repo that has no CI yet, or still uses the old plain check names:
 scripts/apply-repo-settings.sh verify owner/repo --checks "Lint,Unit tests + build"
 ```

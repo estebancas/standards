@@ -11,6 +11,8 @@
 # Options:
 #   --checks "a,b,c"    required status check contexts. Default: the six in docs/contract.md.
 #                       Pass "" to require none (for a repo that has no CI yet).
+#   --replace-checks    make the required checks exactly the --checks list, dropping any others.
+#                       Use it once when migrating check names; without it existing checks are kept.
 #   --branch NAME       branch to protect. Default: the repo's default branch.
 #   --no-environment    do not manage the `production` environment.
 #   --environment NAME  environment to manage. Default: production.
@@ -49,8 +51,10 @@ CHECKS="$DEFAULT_CHECKS"
 BRANCH=""
 ENV_NAME="production"
 MANAGE_ENV=1
+REPLACE=false
 while [ $# -gt 0 ]; do
   case "$1" in
+    --replace-checks) REPLACE=true; shift ;;
     --checks) [ $# -ge 2 ] || usage; CHECKS="$2"; shift 2 ;;
     --branch) [ $# -ge 2 ] || usage; BRANCH="$2"; shift 2 ;;
     --environment) [ $# -ge 2 ] || usage; ENV_NAME="$2"; shift 2 ;;
@@ -186,10 +190,11 @@ fetch_protection() { PROT=$(gh api "repos/$REPO/branches/$BRANCH/protection" 2>/
 check_protection() {
   local msgs
   fetch_protection
-  msgs=$(printf '%s' "$PROT" | jq -r --argjson want "$CHECKS_JSON" '
+  msgs=$(printf '%s' "$PROT" | jq -r --argjson want "$CHECKS_JSON" --argjson replace "$REPLACE" '
     [ (if . == {} then "no branch protection" else empty end),
       (if (.required_status_checks.strict // false) then empty else "strict required checks are off" end),
       (($want - (.required_status_checks.contexts // [])) | if length > 0 then "missing required checks: " + join("; ") else empty end),
+      (if $replace then (((.required_status_checks.contexts // []) - $want) | if length > 0 then "extra required checks: " + join("; ") else empty end) else empty end),
       (if .required_pull_request_reviews == null then "pull request is not required"
        elif .required_pull_request_reviews.required_approving_review_count != 0 then "approvals required: \(.required_pull_request_reviews.required_approving_review_count) (want 0)"
        else empty end),
@@ -204,9 +209,9 @@ check_protection() {
 }
 apply_protection() {
   local body
-  body=$(printf '%s' "$PROT" | jq --argjson want "$CHECKS_JSON" '
+  body=$(printf '%s' "$PROT" | jq --argjson want "$CHECKS_JSON" --argjson replace "$REPLACE" '
     . as $c | {
-      required_status_checks: {strict: true, contexts: ((($c.required_status_checks.contexts // []) + $want) | unique)},
+      required_status_checks: {strict: true, contexts: (if $replace then $want else (($c.required_status_checks.contexts // []) + $want | unique) end)},
       enforce_admins: false,
       required_pull_request_reviews: {
         dismiss_stale_reviews: ($c.required_pull_request_reviews.dismiss_stale_reviews // false),
