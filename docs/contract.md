@@ -11,7 +11,7 @@ that makes no sense for a stack is a no-op command, so the required-check list n
 
 | Command | npm script | Must guarantee |
 | --- | --- | --- |
-| lint | `lint` | Static analysis passes with zero errors. |
+| lint | `lint` | Static analysis passes with zero errors. TypeScript projects run the typecheck (`tsc --noEmit`) inside this command, so the check names do not change. |
 | test | `test`, `build` | The build succeeds and unit + integration tests pass with the coverage gate (90% lines, branches, functions, statements). The build output is uploaded as the `dist` artifact. |
 | mutate | `mutate` | Mutation score stays above the break threshold (85; high 90, low 80). |
 | size | `size` | Built assets stay inside the committed budgets (measured, then +10%). |
