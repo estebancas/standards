@@ -21,6 +21,14 @@ scripts/apply-repo-settings.sh apply  owner/repo --replace-checks
 scripts/apply-repo-settings.sh verify owner/repo --checks "Lint,Unit tests + build"
 ```
 
+## Create a project
+
+Use the `new-project` skill (`skills/new-project/`), or follow `docs/new-project.md` by hand. It creates a repo from `estebancas/template-web-frontend`, applies the settings and opens a first PR that proves the six checks. `docs/gotchas.md` explains the traps behind each step. To install the skill, link it into Claude Code:
+
+```sh
+ln -s "$PWD/skills/new-project" ~/.claude/skills/new-project
+```
+
 ## Reusable workflows
 
 | Workflow | Check | Notable inputs |

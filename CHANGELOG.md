@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `scripts/apply-repo-settings.sh` (apply, verify, `--checks`, `--replace-checks`).
+- `docs/new-project.md`, `docs/gotchas.md` and the `new-project` skill.
+
 ## v1
 
 - Reusable workflows extracted from weekly-routine: lint, test-build, mutation, size, audit, e2e.
