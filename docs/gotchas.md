@@ -32,11 +32,12 @@ Lessons from building the reference (`weekly-routine`), the settings script and 
 ## TypeScript and Dependabot
 
 - **Keep TypeScript below 6.1** while `typescript-eslint`'s peer range stops there (TypeScript 7 already exists). A newer TypeScript makes `npm install` fail with ERESOLVE while `npm ci` still passes. The template's Dependabot ignores TypeScript majors and minors.
+  - **Trigger to revisit:** `npm view typescript-eslint peerDependencies.typescript` includes the TypeScript version you want. Dependabot will not tell you, because the ignore rule hides every TypeScript bump. Last checked 2026-10-11: TypeScript 7.0.2 is out, `typescript-eslint` 8.71.1 still stops below 6.1.0, and the template is on `~6.0.3`.
 - **TypeScript 6 no longer auto-includes `@types/*`**, so `tsconfig.json` lists `types` explicitly (`vite/client`, `node`).
 - **`cooldown` and `ignore` wildcard syntax are valid** in `dependabot.yml` (`@vitest/*`, `@stryker-mutator/*`).
 - **Ignore majors of the coupled toolchain** (`vite`, `vitest`, `@vitest/*`, `@stryker-mutator/*`, `@playwright/test`). They are tied to the pinned Playwright tag and the Stryker patch, so upgrade them by hand.
 - **PWA-only packages** (`vite-plugin-pwa`, `@vite-pwa/assets-generator`) belong in the ignore list only for PWA projects. `@vite-pwa/assets-generator` 2.x breaks `npm install` against `vite-plugin-pwa`'s `^1.0.0` peer range.
-- **npm 11 prints an `allow-scripts` warning** for packages with install scripts, such as `fsevents`. It is only a warning today and may become an error later.
+- **npm 12 turns dependency install scripts off by default.** npm 11 only prints an `allow-scripts` warning (`npm warn allow-scripts ... not yet covered by allowScripts`); npm 12 completes the install but skips the scripts of anything not approved. Approve each package that needs its script with `npm approve-scripts <pkg>`, which writes `allowScripts` into `package.json`, and commit it. The template approves `fsevents` (macOS file watcher; Linux CI does not install it). Entries are pinned to an exact version (`fsevents@2.3.3`), so a Dependabot bump of an approved package makes the warning come back until the entry is updated. Review any new package that needs approval; do not use `--all` or `dangerously-allow-all-scripts`.
 
 ## Shell and `gh`
 
