@@ -78,7 +78,10 @@ Consumers pin a commit SHA, and Dependabot proposes a new one when a newer tag e
 reaches a project only when its owner merges that bump, after the project's own checks pass.
 
 - **Tags** are `vMAJOR.MINOR.PATCH`, annotated, and never moved or deleted. The existing `v1`
-  stays as it is.
+  stays as it is, and `v1.0.0` points at the same commit so Dependabot reads a `# v1` caller as
+  version 1.0.0. Each tag also gets a GitHub release.
+- **A release reaches consumers after their Dependabot cooldown** (7 days in the template), so
+  expect the bump PRs a week after the tag.
 - **Within a major, changes are additive.** New inputs are optional. Existing inputs, job ids and
   caller job names do not change, because renaming either changes a required context. A change
   that breaks this needs a new major tag and a migration note in `CHANGELOG.md`.
