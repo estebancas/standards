@@ -48,4 +48,4 @@ must run them after it.
 
 - Every action is pinned by commit SHA with the version in a trailing comment.
 - Dependabot bumps the actions weekly. Consumers move to a new version through their own PR.
-- A bad change here breaks every consumer, so changes land by PR and callers pin a tagged SHA.
+- A bad change here breaks every consumer only after they merge a bump, so workflow changes get a tag first and consumers move through their own PR.

@@ -5,6 +5,7 @@
 - `scripts/apply-repo-settings.sh` (apply, verify, `--checks`, `--replace-checks`).
 - `docs/new-project.md`, `docs/gotchas.md` and the `new-project` skill.
 - The settings script also manages merge settings: squash only, auto-merge off, delete branch on merge on.
+- `docs/contract.md` has a Releases section: tag naming, additive changes within a major, and the release steps.
 
 ## v1
 

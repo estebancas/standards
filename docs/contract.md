@@ -69,3 +69,20 @@ signed commits, linear history, conversation resolution, branch lock, push restr
 
 `verify` is read-only and exits 1 on drift. The script refuses private repos: branch protection on
 the Free plan is public-only.
+
+## Releases
+
+Consumers pin a commit SHA, and Dependabot proposes a new one when a newer tag exists. A change
+reaches a project only when its owner merges that bump, after the project's own checks pass.
+
+- **Tags** are `vMAJOR.MINOR.PATCH`, annotated, and never moved or deleted. The existing `v1`
+  stays as it is.
+- **Within a major, changes are additive.** New inputs are optional. Existing inputs, job ids and
+  caller job names do not change, because renaming either changes a required context. A change
+  that breaks this needs a new major tag and a migration note in `CHANGELOG.md`.
+- **Patch** for fixes with no visible change, **minor** for new optional inputs or new checks
+  that sit inside an existing job, **major** for anything consumers must edit.
+- **To release:** rename `Unreleased` in `CHANGELOG.md` to the new version, commit, tag that
+  commit, and push the tag. Then consumers get a Dependabot PR.
+- Docs, the settings script and the skill can change on `main` without a tag. Only workflow
+  changes need a release.
