@@ -15,13 +15,17 @@
 #                       Use it once when migrating check names; without it existing checks are kept.
 #   --branch NAME       branch to protect. Default: the repo's default branch.
 #   --no-environment    do not manage the `production` environment.
+#   --no-codeql         do not manage CodeQL default setup or its merge-blocking ruleset (for a
+#                       repo with no language CodeQL supports).
 #   --environment NAME  environment to manage. Default: production.
 #
 # Managed (and nothing else): required status checks (strict, union with existing), a required
 # pull request with 0 approvals, enforce_admins off, force pushes and deletions off, Actions
 # enabled with allowed_actions all and sha_pinning_required, vulnerability alerts, Dependabot
 # security updates, secret scanning with push protection, merge settings (squash only, merge
-# commits and rebase off, auto-merge off, delete branch on merge on), and the environment.
+# commits and rebase off, auto-merge off, delete branch on merge on), CodeQL default setup, a
+# ruleset named "CodeQL alerts" that blocks merging while a high or critical CodeQL alert is
+# open, and the environment.
 # "Update branch" is left at whatever it is. Existing protection that is not listed here (extra checks, code-owner review, signatures,
 # linear history, conversation resolution, lock) is preserved, because the protection endpoint
 # replaces the whole object.
@@ -52,6 +56,7 @@ CHECKS="$DEFAULT_CHECKS"
 BRANCH=""
 ENV_NAME="production"
 MANAGE_ENV=1
+MANAGE_CODEQL=1
 REPLACE=false
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -60,6 +65,7 @@ while [ $# -gt 0 ]; do
     --branch) [ $# -ge 2 ] || usage; BRANCH="$2"; shift 2 ;;
     --environment) [ $# -ge 2 ] || usage; ENV_NAME="$2"; shift 2 ;;
     --no-environment) MANAGE_ENV=0; shift ;;
+    --no-codeql) MANAGE_CODEQL=0; shift ;;
     *) usage ;;
   esac
 done
@@ -252,6 +258,64 @@ apply_protection() {
   printf '%s' "$body" | gh api -X PUT "repos/$REPO/branches/$BRANCH/protection" --input - >/dev/null
 }
 
+# --- CodeQL default setup ------------------------------------------------------------------
+# GitHub picks the languages itself. Enabling is asynchronous, so apply waits for it.
+check_codeql() {
+  local state
+  state=$(gh api "repos/$REPO/code-scanning/default-setup" --jq .state 2>/dev/null) || state="unreadable"
+  if [ "$state" = configured ]; then ok "CodeQL default setup: configured"; else drift "CodeQL default setup: '$state' (want 'configured')"; fi
+}
+apply_codeql() {
+  printf '%s' '{"state":"configured","query_suite":"default"}' \
+    | gh api -X PATCH "repos/$REPO/code-scanning/default-setup" --input - >/dev/null || return 1
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+    [ "$(gh api "repos/$REPO/code-scanning/default-setup" --jq .state 2>/dev/null)" = configured ] && return 0
+    sleep 5
+  done
+  return 1
+}
+
+# --- CodeQL merge-blocking ruleset ---------------------------------------------------------
+# Not a required status check: the six consumer contexts stay unchanged. The rule blocks a merge
+# while CodeQL reports an open high or critical alert. No bypass actors: dismiss the alert with
+# a reason (see docs/gotchas.md) instead.
+RULESET_NAME="CodeQL alerts"
+RULESET_ID=""
+codeql_ruleset_body() {
+  jq -n --arg ref "refs/heads/$BRANCH" --arg name "$RULESET_NAME" '{
+    name: $name, target: "branch", enforcement: "active", bypass_actors: [],
+    conditions: {ref_name: {include: [$ref], exclude: []}},
+    rules: [{type: "code_scanning", parameters: {code_scanning_tools: [
+      {tool: "CodeQL", security_alerts_threshold: "high_or_higher", alerts_threshold: "errors"}]}}]
+  }'
+}
+check_codeql_ruleset() {
+  local detail msgs
+  RULESET_ID=$(gh api "repos/$REPO/rulesets" --jq ".[] | select(.name == \"$RULESET_NAME\") | .id" 2>/dev/null | head -n 1)
+  if [ -z "$RULESET_ID" ]; then drift "ruleset '$RULESET_NAME': missing"; return; fi
+  detail=$(gh api "repos/$REPO/rulesets/$RULESET_ID" 2>/dev/null) || { drift "ruleset '$RULESET_NAME': unreadable"; return; }
+  msgs=$(printf '%s' "$detail" | jq -r --arg ref "refs/heads/$BRANCH" '
+    [ (if .enforcement == "active" then empty else "enforcement is " + .enforcement + " (want active)" end),
+      (if (.conditions.ref_name.include // []) == [$ref] then empty else "does not target exactly " + $ref end),
+      (if ((.conditions.ref_name.exclude // []) | length) == 0 then empty else "has branch exclusions" end),
+      (if ((.bypass_actors // []) | length) == 0 then empty else "has bypass actors" end),
+      (if ([.rules[]? | select(.type == "code_scanning") | .parameters.code_scanning_tools[]?
+            | select(.tool == "CodeQL" and .security_alerts_threshold == "high_or_higher" and .alerts_threshold == "errors")] | length) > 0
+         then empty else "no CodeQL rule at high_or_higher / errors" end)
+    ] | .[]')
+  if [ -z "$msgs" ]; then ok "ruleset '$RULESET_NAME': blocks high or critical CodeQL alerts on $BRANCH"; else
+    printf '%s\n' "$msgs" | while IFS= read -r m; do printf "DRIFT  ruleset '%s': %s\n" "$RULESET_NAME" "$m"; done
+    DRIFT=$((DRIFT + $(printf '%s\n' "$msgs" | wc -l)))
+  fi
+}
+apply_codeql_ruleset() {
+  if [ -n "$RULESET_ID" ]; then
+    codeql_ruleset_body | gh api -X PUT "repos/$REPO/rulesets/$RULESET_ID" --input - >/dev/null
+  else
+    codeql_ruleset_body | gh api -X POST "repos/$REPO/rulesets" --input - >/dev/null
+  fi
+}
+
 # --- run -----------------------------------------------------------------------------------
 run_group() {
   local before=$DRIFT
@@ -271,6 +335,8 @@ run_group secret_scanning
 run_group merge_settings
 run_group actions
 [ "$MANAGE_ENV" = 1 ] && run_group environment
+[ "$MANAGE_CODEQL" = 1 ] && run_group codeql
+[ "$MANAGE_CODEQL" = 1 ] && run_group codeql_ruleset
 run_group protection
 
 if [ "$DRIFT" -gt 0 ] || [ "$FAIL" = 1 ]; then
