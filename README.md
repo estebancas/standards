@@ -5,7 +5,7 @@ implementation. See `docs/contract.md` for what every project exposes and what C
 
 ## Three layers
 
-1. **Template repo** (`template-web-frontend`, separate repo): files copied once when a project
+1. **Template repo** (`template-pwa`, separate repo): files copied once when a project
    is created.
 2. **Reusable workflows** (this repo, `.github/workflows/`): CI logic that keeps improving.
    Projects call them pinned by commit SHA, and Dependabot proposes bumps as PRs.
@@ -23,7 +23,7 @@ scripts/apply-repo-settings.sh verify owner/repo --checks "Lint,Unit tests + bui
 
 ## Create a project
 
-Use the `new-project` skill (`skills/new-project/`), or follow `docs/new-project.md` by hand. It creates a repo from `estebancas/template-web-frontend`, applies the settings and opens a first PR that proves the six checks. `docs/gotchas.md` explains the traps behind each step. To install the skill, link it into Claude Code:
+Use the `new-project` skill (`skills/new-project/`), or follow `docs/new-project.md` by hand. It creates a repo from `estebancas/template-pwa`, applies the settings and opens a first PR that proves the six checks. `docs/gotchas.md` explains the traps behind each step. To install the skill, link it into Claude Code:
 
 ```sh
 ln -s "$PWD/skills/new-project" ~/.claude/skills/new-project

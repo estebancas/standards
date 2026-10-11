@@ -1,12 +1,12 @@
 ---
 name: new-project
-description: Create a new frontend project from the user's template with the standard CI guardrails and repo settings applied. Use when asked to start, create or scaffold a new project, create a repo from the template, set up a project with the standard guardrails, or "new-project". Covers the template repo, the settings script, and a first PR that proves the six required checks.
+description: Create a new PWA project from the user's template with the standard CI guardrails and repo settings applied. Use when asked to start, create or scaffold a new project, create a repo from the template, set up a project with the standard guardrails, or "new-project". Covers the template repo, the settings script, and a first PR that proves the six required checks.
 version: 1.0.0
 ---
 
 # new-project
 
-Creates a GitHub repo from `estebancas/template-web-frontend`, applies the standard settings with `scripts/apply-repo-settings.sh`, and opens a first PR to prove the six required checks go green. The reasons behind every step are in `docs/new-project.md` and `docs/gotchas.md` in the `standards` repo; read them when something fails. `docs/contract.md` and the script's header (`scripts/apply-repo-settings.sh`) are the source of truth for check names and settings, not this file.
+Creates a GitHub repo from `estebancas/template-pwa`, applies the standard settings with `scripts/apply-repo-settings.sh`, and opens a first PR to prove the six required checks go green. The reasons behind every step are in `docs/new-project.md` and `docs/gotchas.md` in the `standards` repo; read them when something fails. `docs/contract.md` and the script's header (`scripts/apply-repo-settings.sh`) are the source of truth for check names and settings, not this file.
 
 ## Find the standards checkout
 
@@ -45,7 +45,7 @@ Note the start time (`date +%s`) after the yes, to report elapsed time at the en
 Run from the parent directory:
 
 1. **Create and clone.**
-   `gh repo create <owner>/<name> --template estebancas/template-web-frontend --public --clone`, then `cd <name>`.
+   `gh repo create <owner>/<name> --template estebancas/template-pwa --public --clone`, then `cd <name>`.
 2. **Make it theirs.**
    - Set `name` in `package.json` and the `<title>` and description in `index.html`.
    - Replace `@estebancas` in `.github/CODEOWNERS` if the owner differs.
@@ -55,7 +55,7 @@ Run from the parent directory:
 4. **Apply the settings.**
    `$STANDARDS/scripts/apply-repo-settings.sh apply <owner>/<name>`, then `verify`. `verify` must exit 0. If anything stays out of line, show the output and the relevant entry from `docs/gotchas.md`; do not retry blindly.
 5. **Prove it with a first PR.** Create `chore/first-change`, append a line to `README.md`, push, and `gh pr create`. Wait for the six checks (`gh pr checks`, polling with an until-loop, not a chain of sleeps): `Lint / lint`, `Unit tests + build / test`, `Mutation testing / mutation`, `Bundle size / size`, `Dependency audit / audit`, `End-to-end / e2e`. Report the results and the elapsed time since the confirmation. Leave the PR open for the user to merge.
-6. **Hand over the manual follow-ups** from `docs/new-project.md`, section 5: a real deploy and Cloudflare secrets, visual baselines after the first real UI (needs Docker), size budgets, optional PWA, and the `CLAUDE.md` description.
+6. **Hand over the manual follow-ups** from `docs/new-project.md`, section 5: turning on the Cloudflare deploy (Worker name, URL, variable and secret), the PWA identity (manifest, icon, `npm run generate-icons:docker`), visual baselines after the first real UI (needs Docker), size budgets, and the `CLAUDE.md` description.
 
 ## Never
 

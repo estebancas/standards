@@ -6,6 +6,7 @@
 - `docs/new-project.md`, `docs/gotchas.md` and the `new-project` skill.
 - The settings script also manages merge settings: squash only, auto-merge off, delete branch on merge on.
 - `docs/contract.md` has a Releases section: tag naming, additive changes within a major, and the release steps.
+- Docs and the `new-project` skill now point at `template-pwa` (the renamed `template-web-frontend`, now a PWA with a guarded Cloudflare deploy).
 - `docs/contract.md` records the drift-detection design (central weekly `verify` over `repos.txt`), the adopted extra checks, and the deferred Python and Electron targets.
 
 ## v1

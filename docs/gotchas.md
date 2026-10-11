@@ -28,6 +28,7 @@ Lessons from building the reference (`weekly-routine`), the settings script and 
 - **The e2e workflow does not skip when there is no Playwright config.** A missing config fails the check, so a project cannot pass silently without e2e.
 - **Visual baselines and size budgets cannot be templated.** After the first real UI, regenerate the baselines and re-measure the budgets (measured size plus about 10%).
 - **The icon and generated-assets check must include untracked files** (`git status --porcelain`), not only diffs, or a new generated file passes unnoticed.
+- **Generated icons must come from Linux.** `pwa-assets-generator` writes a slightly different `pwa-64x64.png` on macOS than on the CI runner, so the Lint generated-assets check fails on icons committed from a Mac. Regenerate with `npm run generate-icons:docker` (Linux x64) in the template.
 
 ## TypeScript and Dependabot
 

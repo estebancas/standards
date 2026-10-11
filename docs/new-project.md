@@ -1,6 +1,6 @@
 # New project
 
-How to start a frontend project with all the guardrails. The `new-project` skill (`skills/new-project/`) automates steps 1 to 4. The reasons behind the traps are in `docs/gotchas.md`, and what each check guarantees is in `docs/contract.md`.
+How to start a PWA project (TypeScript, Vite, installable and offline-capable) with all the guardrails. The `new-project` skill (`skills/new-project/`) automates steps 1 to 4. The reasons behind the traps are in `docs/gotchas.md`, and what each check guarantees is in `docs/contract.md`.
 
 Measured on the smoke test: 126 seconds from creating the repo to a green first PR.
 
@@ -16,7 +16,7 @@ Measured on the smoke test: 126 seconds from creating the repo to a green first 
 From a scratch or parent directory, not from inside another repo:
 
 ```sh
-gh repo create <owner>/<name> --template estebancas/template-web-frontend --public --clone
+gh repo create <owner>/<name> --template estebancas/template-pwa --public --clone
 cd <name>
 ```
 
@@ -49,10 +49,10 @@ Open a branch (for example `chore/first-change`) with a trivial change and a PR.
 
 The script and the template cannot do these:
 
-- **Deploy.** `ci.yml` has a placeholder `Deploy` job that only echoes. Replace it with a real deploy. For Cloudflare, copy `wrangler.jsonc` and the deploy job from `weekly-routine`, and add `environment: production` (the script already created it, with you as the reviewer). Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repository secrets by hand. `Deploy` is not a required check.
+- **Deploy.** `ci.yml` has a `Deploy to Cloudflare` job that is skipped until the repository variable `CLOUDFLARE_ACCOUNT_ID` is set, so a new project stays green. To turn it on, set the Worker `name` in `wrangler.jsonc`, replace the environment URL in `ci.yml`, add the `CLOUDFLARE_ACCOUNT_ID` variable and the `CLOUDFLARE_API_TOKEN` secret by hand, and approve the first run in the `production` environment (the script already created it, with you as the reviewer). `Deploy` is not a required check.
 - **Visual baselines.** The committed ones belong to the starter counter. After the first real UI, run `npm run e2e:visual -- --update-snapshots` (needs Docker running) and commit `e2e/__screenshots__/**`.
 - **Size budgets.** After the first real build, set each limit in `.size-limit.json` to the measured size plus about 10%.
-- **Optional PWA.** Not in the template. Follow `weekly-routine`.
+- **PWA identity.** Set the manifest names and colours in `vite.config.ts`, replace `public/icon.svg`, and run `npm run generate-icons:docker` (needs Docker; macOS output differs from CI for the 64px icon). Commit what it changes in `public/`.
 - **Docs.** Fill in "What this is" and "Architecture" in `CLAUDE.md`.
 
 ## Keeping a project current
