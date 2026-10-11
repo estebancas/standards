@@ -22,6 +22,15 @@ on:
       generated-assets-required-files:
         type: string
         default: ""
+      # Workflow checks: actionlint (syntax, expressions, shellcheck on `run:` blocks) and
+      # zizmor (workflow security audits, default persona). On by default.
+      workflow-checks:
+        type: boolean
+        default: true
+      # gitleaks over the full git history. On by default.
+      secret-scan:
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -31,6 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          # gitleaks scans the whole history, so it needs more than the default depth of 1.
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: ${{ inputs.node-version-file }}
@@ -40,6 +53,31 @@ jobs:
         env:
           COMMAND: ${{ inputs.lint-command }}
         run: eval "$COMMAND"
+      - name: zizmor
+        if: inputs.workflow-checks
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: v1.30.1
+          # Fail the job on findings instead of uploading SARIF, which needs
+          # `security-events: write`.
+          advanced-security: false
+          annotations: true
+      - name: actionlint
+        if: inputs.workflow-checks
+        run: |
+          curl -fsSL -o actionlint.tar.gz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz -C "$RUNNER_TEMP" actionlint
+          rm actionlint.tar.gz
+          "$RUNNER_TEMP/actionlint" -color
+      - name: gitleaks
+        if: inputs.secret-scan
+        run: |
+          curl -fsSL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz -C "$RUNNER_TEMP" gitleaks
+          rm gitleaks.tar.gz
+          "$RUNNER_TEMP/gitleaks" git --redact --exit-code 1 --no-banner .
       - name: Generated assets regenerate cleanly
         if: inputs.generated-assets-command != ''
         env:

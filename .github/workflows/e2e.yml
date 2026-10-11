@@ -29,9 +29,13 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     container:
-      image: ${{ inputs.container-image }}
+      # The caller pins this tag to its installed @playwright/test version (see the input's
+      # comment above), so a digest here would only fight the Playwright upgrade.
+      image: ${{ inputs.container-image }} # zizmor: ignore[unpinned-images]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       # No "skip if no config" step: a project without Playwright config must fail this check
       # rather than pass silently.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
