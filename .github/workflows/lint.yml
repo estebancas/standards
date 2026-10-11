@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
           # gitleaks scans the whole history, so it needs more than the default depth of 1.
           fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: ${{ inputs.node-version-file }}
           cache: npm
@@ -54,7 +54,7 @@ jobs:
           COMMAND: ${{ inputs.lint-command }}
         run: eval "$COMMAND"
       - name: zizmor
-        if: inputs.workflow-checks
+        if: ${{ !cancelled() && inputs.workflow-checks }}
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
           version: v1.30.1
@@ -63,7 +63,7 @@ jobs:
           advanced-security: false
           annotations: true
       - name: actionlint
-        if: inputs.workflow-checks
+        if: ${{ !cancelled() && inputs.workflow-checks }}
         run: |
           curl -fsSL -o actionlint.tar.gz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz" | sha256sum -c -
@@ -71,7 +71,7 @@ jobs:
           rm actionlint.tar.gz
           "$RUNNER_TEMP/actionlint" -color
       - name: gitleaks
-        if: inputs.secret-scan
+        if: ${{ !cancelled() && inputs.secret-scan }}
         run: |
           curl -fsSL -o gitleaks.tar.gz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
