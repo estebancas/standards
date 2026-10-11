@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
+## v1.1.0
 
+- `lint.yml` runs zizmor, actionlint and gitleaks (new optional inputs `workflow-checks` and `secret-scan`, both on by default). No required check name changes. The job now checks out the full history for gitleaks and every checkout sets `persist-credentials: false`.
+- The settings script manages CodeQL default setup and a `CodeQL alerts` ruleset that blocks merges on open high or critical alerts (`--no-codeql` skips both).
+- Stale action pins refreshed (`setup-node`, `upload-artifact`, `download-artifact`) and Dependabot cooldown raised to 7 days.
+- Docs: `contract.md` Extra checks table and `gotchas.md` section on fixing and suppressing findings.
 - `scripts/apply-repo-settings.sh` (apply, verify, `--checks`, `--replace-checks`).
 - `docs/new-project.md`, `docs/gotchas.md` and the `new-project` skill.
 - The settings script also manages merge settings: squash only, auto-merge off, delete branch on merge on.

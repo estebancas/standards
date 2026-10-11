@@ -40,6 +40,22 @@ Lessons from building the reference (`weekly-routine`), the settings script and 
 - **PWA-only packages** (`vite-plugin-pwa`, `@vite-pwa/assets-generator`) belong in the ignore list only for PWA projects. `@vite-pwa/assets-generator` 2.x breaks `npm install` against `vite-plugin-pwa`'s `^1.0.0` peer range.
 - **npm 12 turns dependency install scripts off by default.** npm 11 only prints an `allow-scripts` warning (`npm warn allow-scripts ... not yet covered by allowScripts`); npm 12 completes the install but skips the scripts of anything not approved. Approve each package that needs its script with `npm approve-scripts <pkg>`, which writes `allowScripts` into `package.json`, and commit it. The template approves `fsevents` (macOS file watcher; Linux CI does not install it). Entries are pinned to an exact version (`fsevents@2.3.3`), so a Dependabot bump of an approved package makes the warning come back until the entry is updated. Review any new package that needs approval; do not use `--all` or `dangerously-allow-all-scripts`.
 
+## Extra checks (zizmor, actionlint, gitleaks, CodeQL)
+
+Fix a finding when you can. Suppress it only with a reason written next to the suppression.
+
+- **zizmor:** add `# zizmor: ignore[<rule>]` at the end of the flagged line, with a comment above saying why. Example: the `unpinned-images` ignore on the e2e container in `e2e.yml`. Run it locally with `uvx zizmor@1.30.1 .`, and with `GH_TOKEN=$(gh auth token)` for the online audits CI also runs.
+- **actionlint:** put `paths:` ignores or `ignore:` regexes in `.github/actionlint.yaml`, each with a comment. Local run: `docker run --rm -v "$PWD":/repo -w /repo rhysd/actionlint:1.7.12`.
+- **gitleaks:** add the finding's fingerprint to `.gitleaksignore`, on its own line under a `#` comment saying why it is not a secret. A real secret is rotated first, because it stays in the history.
+- **CodeQL:** dismiss the alert on the Security tab (false positive, used in tests, or won't fix) and write the reason. The ruleset has no bypass actors, so dismissing is the way past a false positive.
+- **zizmor's online audits flag stale version comments.** `ref-version-mismatch` fires when `# v7` no longer matches the commit the tag points to. Bump the SHA to the tag's current commit (what Dependabot proposes), or fix the comment.
+- **zizmor `cache-poisoning` fires on a deploy job** that restores a cache. In publishing jobs use `package-manager-cache: false` on `actions/setup-node` instead of `cache: npm`.
+- **Every `actions/checkout` needs `persist-credentials: false`** unless the job pushes. zizmor's `artipacked` audit flags it otherwise.
+- **zizmor wants a Dependabot `cooldown` of at least 7 days.** Both the template and standards use `default-days: 7`.
+- **The scans run even when an earlier step fails** (`!cancelled()`), so one run lists every problem, not only the first.
+- **gitleaks scans the whole history**, so a secret removed in a later commit still fails until it is in `.gitleaksignore`. The checkout uses `fetch-depth: 0` for this.
+- **CodeQL default setup turns on asynchronously.** `apply` waits up to a minute for it to report `configured`.
+
 ## Shell and `gh`
 
 - **Scripts run under bash, not zsh.** zsh does not word-split unquoted variables. The settings script targets bash 3.2, the macOS default.

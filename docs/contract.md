@@ -59,6 +59,8 @@ ids and are confirmed when weekly-routine is converted (M3).
 - Vulnerability alerts, Dependabot security updates, secret scanning with push protection.
 - Merge settings: squash merge on, merge commits off, rebase merge off, auto-merge off, delete
   branch on merge on. History is one commit per pull request.
+- CodeQL default setup, and the `CodeQL alerts` ruleset that blocks merging while a high or
+  critical CodeQL alert is open (see Extra checks). `--no-codeql` skips both.
 - A `production` environment: owner as required reviewer, self-review allowed, deployment branch
   policy for the default branch.
 
@@ -103,10 +105,27 @@ workflow in this repo reads `repos.txt` (one `owner/repo` per line, kept by hand
 
 ## Extra checks
 
-actionlint, zizmor, CodeQL and gitleaks are adopted (decided 2026-10-11). They are added in the
-`standards` repo's own CI and in the template, and the six required checks stay as they are.
-Making any of them a required check needs a contract change here and a `--replace-checks`
-migration note.
+actionlint, zizmor, CodeQL and gitleaks are adopted (decided 2026-10-11). The six required
+checks stay as they are. Making any of them a required check needs a contract change here and a
+`--replace-checks` migration note.
+
+| Tool | Where it runs | What it guarantees | Turn off |
+| --- | --- | --- | --- |
+| zizmor (default persona) | `Lint / lint` | Workflow security audits pass: no template injection, no unpinned actions, no over-broad permissions, no credential persistence, no cache poisoning in publishing jobs. | `workflow-checks: false` |
+| actionlint | `Lint / lint` | Workflow syntax, expressions and shellcheck on `run:` blocks pass. | `workflow-checks: false` |
+| gitleaks | `Lint / lint` | No secret in the full git history. | `secret-scan: false` |
+| CodeQL | GitHub default setup | No open high or critical alert on the default branch, enforced by a ruleset. | `--no-codeql` on the settings script |
+
+- **The first three sit inside `Lint / lint`**, so no required context is added. `workflow-checks`
+  and `secret-scan` are optional boolean inputs of `lint.yml`, both `true` by default, and the
+  lint job checks out the full history for gitleaks.
+- **CodeQL is not a required status check.** The settings script turns on default setup (GitHub
+  picks the languages) and a ruleset named `CodeQL alerts` with one `code_scanning` rule at
+  `high_or_higher` / `errors` on the default branch and no bypass actors. `verify` reports both.
+- **Findings are fixed or suppressed with a written reason.** How to suppress each tool is in
+  `docs/gotchas.md`.
+- **The tools are pinned.** zizmor by action SHA and `version`, actionlint and gitleaks by release
+  URL and sha256 in `lint.yml`. A new version is a `lint.yml` change and a new release.
 
 ## Deferred
 
