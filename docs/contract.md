@@ -86,3 +86,29 @@ reaches a project only when its owner merges that bump, after the project's own 
   commit, and push the tag. Then consumers get a Dependabot PR.
 - Docs, the settings script and the skill can change on `main` without a tag. Only workflow
   changes need a release.
+
+## Drift detection
+
+`apply-repo-settings.sh verify` is run centrally, not in each project. A weekly scheduled
+workflow in this repo reads `repos.txt` (one `owner/repo` per line, kept by hand) and runs
+`verify` on each. A clean run is silent. Drift fails the job, and GitHub emails the owner.
+
+- Only repos in `repos.txt` are watched. Add a repo when it adopts the standards; the
+  `new-project` skill does this as a step. Private repos stay off the list, because `verify`
+  refuses them.
+- The default `GITHUB_TOKEN` cannot read branch protection, so the workflow uses one
+  fine-grained token stored as a secret here, with read-only Administration, Environments and
+  Metadata access. It expires within a year and is rotated by hand.
+- Projects carry no drift workflow and no extra secret.
+
+## Extra checks
+
+actionlint, zizmor, CodeQL and gitleaks are adopted (decided 2026-10-11). They are added in the
+`standards` repo's own CI and in the template, and the six required checks stay as they are.
+Making any of them a required check needs a contract change here and a `--replace-checks`
+migration note.
+
+## Deferred
+
+Contract targets for Python and Electron (make vs just, check shape) are decided when the first
+project of that kind starts. The Python side is piloted with workout-coach.
