@@ -20,8 +20,9 @@
 # Managed (and nothing else): required status checks (strict, union with existing), a required
 # pull request with 0 approvals, enforce_admins off, force pushes and deletions off, Actions
 # enabled with allowed_actions all and sha_pinning_required, vulnerability alerts, Dependabot
-# security updates, secret scanning with push protection, and the environment.
-# Existing protection that is not listed here (extra checks, code-owner review, signatures,
+# security updates, secret scanning with push protection, merge settings (squash only, merge
+# commits and rebase off, auto-merge off, delete branch on merge on), and the environment.
+# "Update branch" is left at whatever it is. Existing protection that is not listed here (extra checks, code-owner review, signatures,
 # linear history, conversation resolution, lock) is preserved, because the protection endpoint
 # replaces the whole object.
 #
@@ -112,6 +113,26 @@ check_secret_scanning() {
 }
 apply_secret_scanning() {
   printf '%s' '{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}' \
+    | gh api -X PATCH "repos/$REPO" --input - >/dev/null
+}
+
+# --- merge settings: squash only, auto-merge off, delete branch on merge --------------------
+check_merge_settings() {
+  local msgs
+  msgs=$(gh api "repos/$REPO" 2>/dev/null | jq -r '
+    [ (if .allow_merge_commit == false then empty else "merge commits are allowed (want off)" end),
+      (if .allow_squash_merge == true then empty else "squash merge is off (want on)" end),
+      (if .allow_rebase_merge == false then empty else "rebase merge is allowed (want off)" end),
+      (if .allow_auto_merge == false then empty else "auto-merge is on (want off)" end),
+      (if .delete_branch_on_merge == true then empty else "delete branch on merge is off (want on)" end)
+    ] | .[]')
+  if [ -z "$msgs" ]; then ok "merge settings: squash only, auto-merge off, delete branch on merge"; else
+    printf '%s\n' "$msgs" | while IFS= read -r m; do printf 'DRIFT  merge settings: %s\n' "$m"; done
+    DRIFT=$((DRIFT + $(printf '%s\n' "$msgs" | wc -l)))
+  fi
+}
+apply_merge_settings() {
+  printf '%s' '{"allow_merge_commit":false,"allow_squash_merge":true,"allow_rebase_merge":false,"allow_auto_merge":false,"delete_branch_on_merge":true}' \
     | gh api -X PATCH "repos/$REPO" --input - >/dev/null
 }
 
@@ -247,6 +268,7 @@ echo "$MODE $REPO (branch $BRANCH)"
 run_group vulnerability_alerts
 run_group security_fixes
 run_group secret_scanning
+run_group merge_settings
 run_group actions
 [ "$MANAGE_ENV" = 1 ] && run_group environment
 run_group protection

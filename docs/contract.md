@@ -57,13 +57,15 @@ ids and are confirmed when weekly-routine is converted (M3).
 - Actions enabled, `allowed_actions: all`, `sha_pinning_required`. The script refuses to turn
   pinning on while a workflow still uses an unpinned action.
 - Vulnerability alerts, Dependabot security updates, secret scanning with push protection.
+- Merge settings: squash merge on, merge commits off, rebase merge off, auto-merge off, delete
+  branch on merge on. History is one commit per pull request.
 - A `production` environment: owner as required reviewer, self-review allowed, deployment branch
   policy for the default branch.
 
 Not managed, and preserved when already set (the protection endpoint replaces the whole object, so
 the script reads current state and sends it back): code-owner review, stale-review dismissal,
-signed commits, linear history, conversation resolution, branch lock, push restrictions, and
-merge-button settings.
+signed commits, linear history, conversation resolution, branch lock, push restrictions, and the
+"update branch" button.
 
 `verify` is read-only and exits 1 on drift. The script refuses private repos: branch protection on
 the Free plan is public-only.
