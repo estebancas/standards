@@ -53,7 +53,8 @@ Fix a finding when you can. Suppress it only with a reason written next to the s
 - **Every `actions/checkout` needs `persist-credentials: false`** unless the job pushes. zizmor's `artipacked` audit flags it otherwise.
 - **zizmor wants a Dependabot `cooldown` of at least 7 days.** Both the template and standards use `default-days: 7`.
 - **The scans run even when an earlier step fails** (`!cancelled()`), so one run lists every problem, not only the first.
-- **gitleaks scans the whole history**, so a secret removed in a later commit still fails until it is in `.gitleaksignore`. The checkout uses `fetch-depth: 0` for this.
+- **gitleaks scans the whole history of the checked-out commit** (`--log-opts=HEAD`), so a secret removed in a later commit still fails until it is in `.gitleaksignore`. The checkout uses `fetch-depth: 0` for this. Without `--log-opts` gitleaks scans every fetched branch, and a leak on one unmerged branch fails every other PR.
+- **GitHub push protection blocks well-known secret formats** (AWS keys, for example) before CI runs, so a gitleaks test needs a generic `api_key = "..."` string.
 - **CodeQL default setup turns on asynchronously.** `apply` waits up to a minute for it to report `configured`.
 
 ## Shell and `gh`

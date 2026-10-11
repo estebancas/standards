@@ -77,7 +77,9 @@ jobs:
           echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tar.gz" | sha256sum -c -
           tar -xzf gitleaks.tar.gz -C "$RUNNER_TEMP" gitleaks
           rm gitleaks.tar.gz
-          "$RUNNER_TEMP/gitleaks" git --redact --exit-code 1 --no-banner .
+          # Scan the history of the checked-out commit only. The default is every fetched ref, so
+          # a leak on some other unmerged branch would fail every PR.
+          "$RUNNER_TEMP/gitleaks" git --redact --exit-code 1 --no-banner --log-opts="HEAD" .
       - name: Generated assets regenerate cleanly
         if: inputs.generated-assets-command != ''
         env:
