@@ -158,9 +158,12 @@ unpinned_actions() {
 check_actions() {
   local a
   a=$(gh api "repos/$REPO/actions/permissions" 2>/dev/null) || { drift "actions permissions: unreadable"; return; }
-  [ "$(printf '%s' "$a" | jq -r .enabled)" = true ] && ok "actions: enabled" || drift "actions: disabled"
-  [ "$(printf '%s' "$a" | jq -r .allowed_actions)" = all ] && ok "actions: allowed_actions all" \
-    || drift "actions: allowed_actions is '$(printf '%s' "$a" | jq -r .allowed_actions)' (want all)"
+  if [ "$(printf '%s' "$a" | jq -r .enabled)" = true ]; then ok "actions: enabled"; else drift "actions: disabled"; fi
+  if [ "$(printf '%s' "$a" | jq -r .allowed_actions)" = all ]; then
+    ok "actions: allowed_actions all"
+  else
+    drift "actions: allowed_actions is '$(printf '%s' "$a" | jq -r .allowed_actions)' (want all)"
+  fi
   if [ "$(printf '%s' "$a" | jq -r .sha_pinning_required)" = true ]; then
     ok "actions: sha_pinning_required"
   else
