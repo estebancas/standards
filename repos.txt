@@ -1,0 +1,9 @@
+# Repos watched by the weekly drift check (.github/workflows/drift.yml).
+#
+# One repo per line: owner/repo, then optional options for
+# `scripts/apply-repo-settings.sh verify` (see its header). Options are split on spaces, so a
+# value cannot contain one. Public repos only, because verify refuses private ones. Blank lines
+# and lines starting with # are ignored. The new-project skill adds a line for each new project.
+estebancas/weekly-routine
+estebancas/template-pwa
+estebancas/standards --no-environment --checks actionlint,zizmor,shellcheck,gitleaks

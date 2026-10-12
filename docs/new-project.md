@@ -45,6 +45,10 @@ This sets branch protection with the six required checks, Actions with SHA pinni
 Open a branch (for example `chore/first-change`) with a trivial change and a PR. All six checks should go green:
 `Lint / lint`, `Unit tests + build / test`, `Mutation testing / mutation`, `Bundle size / size`, `Dependency audit / audit`, `End-to-end / e2e`. The six names do not change when the extra checks are on: zizmor, actionlint and gitleaks run inside `Lint / lint`, and CodeQL reports separately.
 
+## 4b. Add it to the drift check
+
+In this repo, add `<owner>/<name>` as a line in `repos.txt` and open a PR. The weekly `Drift` workflow then runs `verify` on the new project (see "Drift detection" in `docs/contract.md`).
+
 ## 5. Manual follow-ups
 
 The script and the template cannot do these:

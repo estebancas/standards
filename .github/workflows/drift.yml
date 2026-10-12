@@ -1,0 +1,31 @@
+name: Drift
+
+# Weekly check that every repo in repos.txt still has the settings docs/contract.md asks for.
+# A clean run is silent. Drift, or a token that expires within 30 days, fails the job and GitHub
+# emails the owner. DRIFT_TOKEN is a fine-grained token with read-only Administration,
+# Environments and Metadata access, because the default GITHUB_TOKEN cannot read branch protection.
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify repo settings
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Verify
+        env:
+          GH_TOKEN: ${{ secrets.DRIFT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::The DRIFT_TOKEN secret is not set. See docs/contract.md, Drift detection."
+            exit 1
+          fi
+          scripts/check-drift.sh

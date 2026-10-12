@@ -95,16 +95,26 @@ reaches a project only when its owner merges that bump, after the project's own 
 
 ## Drift detection
 
-`apply-repo-settings.sh verify` is run centrally, not in each project. A weekly scheduled
-workflow in this repo reads `repos.txt` (one `owner/repo` per line, kept by hand) and runs
-`verify` on each. A clean run is silent. Drift fails the job, and GitHub emails the owner.
+`apply-repo-settings.sh verify` is run centrally, not in each project. The `Drift` workflow
+(`.github/workflows/drift.yml`, Mondays 05:17 UTC) runs `scripts/check-drift.sh`, which reads
+`repos.txt` and runs `verify` on each line. A clean run is silent. Drift fails the job, and
+GitHub emails the owner. The run summary names every repo that drifted and shows its `verify`
+output.
 
-- Only repos in `repos.txt` are watched. Add a repo when it adopts the standards; the
-  `new-project` skill does this as a step. Private repos stay off the list, because `verify`
-  refuses them.
+- Only repos in `repos.txt` are watched. Each line is `owner/repo`, then optional `verify`
+  options (for `standards` itself: `--no-environment --checks ...`), split on spaces. Add a
+  repo when it adopts the standards; the `new-project` skill does this as a step. Private repos
+  stay off the list, because `verify` refuses them.
 - The default `GITHUB_TOKEN` cannot read branch protection, so the workflow uses one
-  fine-grained token stored as a secret here, with read-only Administration, Environments and
-  Metadata access. It expires within a year and is rotated by hand.
+  fine-grained token stored as the `DRIFT_TOKEN` secret here. It has read-only Administration,
+  Environments and Metadata access, and repository access to every watched repo (all
+  repositories, so adding a repo to the list needs no token change). It expires within a year
+  and is rotated by hand.
+- **Rotation reminder:** the script reads the token's expiry from the API response and fails
+  the run when 30 days or fewer remain, so the reminder arrives as the same email as drift.
+- A missing or unreadable secret fails the run too, instead of passing silently.
+- GitHub turns off scheduled workflows in a public repo after 60 days without repository
+  activity. Any commit or a manual run (`workflow_dispatch`) resets that.
 - Projects carry no drift workflow and no extra secret.
 
 ## Extra checks
@@ -142,7 +152,7 @@ They are not part of the consumer six above.
 | --- | --- |
 | `actionlint` | The reusable workflows and `ci.yml`: syntax, expressions, shellcheck on `run:` blocks. |
 | `zizmor` | The same files, default persona, with the online audits. |
-| `shellcheck` | `scripts/apply-repo-settings.sh` (it targets Bash 3.2). |
+| `shellcheck` | `scripts/apply-repo-settings.sh` and `scripts/check-drift.sh` (both target Bash 3.2). |
 | `gitleaks` | The history of the checked-out commit. |
 
 - **`main` needs a pull request**, with all four checks green and the branch up to date. The

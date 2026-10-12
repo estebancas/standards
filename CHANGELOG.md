@@ -4,6 +4,7 @@
 
 - `standards` now checks itself: `ci.yml` runs actionlint, zizmor, shellcheck and gitleaks on every pull request, and `main` is protected with those four as required checks (`docs/contract.md`, "Checks on this repo").
 - `apply-repo-settings.sh` uses plain if/else where shellcheck flagged `A && B || C` (no behaviour change).
+- Weekly drift check: the `Drift` workflow runs `scripts/check-drift.sh`, which runs `verify` on every repo in the new `repos.txt`. It needs the `DRIFT_TOKEN` secret, and fails when the token has 30 days or fewer left. The `new-project` skill adds each new repo to `repos.txt`.
 - `docs/new-project.md` and the `new-project` skill mention the extra checks and CodeQL ruleset, and say what to do with a finding.
 
 ## v1.1.0
