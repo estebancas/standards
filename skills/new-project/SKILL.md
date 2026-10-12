@@ -55,11 +55,12 @@ Run from the parent directory:
 4. **Apply the settings.**
    `$STANDARDS/scripts/apply-repo-settings.sh apply <owner>/<name>`, then `verify`. `verify` must exit 0. If anything stays out of line, show the output and the relevant entry from `docs/gotchas.md`; do not retry blindly.
 5. **Prove it with a first PR.** Create `chore/first-change`, append a line to `README.md`, push, and `gh pr create`. Wait for the six checks (`gh pr checks`, polling with an until-loop, not a chain of sleeps): `Lint / lint`, `Unit tests + build / test`, `Mutation testing / mutation`, `Bundle size / size`, `Dependency audit / audit`, `End-to-end / e2e`. Report the results and the elapsed time since the confirmation. Leave the PR open for the user to merge.
-6. **Hand over the manual follow-ups** from `docs/new-project.md`, section 5: turning on the Cloudflare deploy (Worker name, URL, variable and secret), the PWA identity (manifest, icon, `npm run generate-icons:docker`), visual baselines after the first real UI (needs Docker), size budgets, and the `CLAUDE.md` description.
+6. **Add the repo to the drift check.** In `$STANDARDS` (not the new repo), branch from `origin/main`, append `<owner>/<name>` to `repos.txt`, run `scripts/check-drift.sh`, and open a PR (`main` there needs one). Leave it for the user to merge, and report it next to the first PR.
+7. **Hand over the manual follow-ups** from `docs/new-project.md`, section 5: turning on the Cloudflare deploy (Worker name, URL, variable and secret), the PWA identity (manifest, icon, `npm run generate-icons:docker`), visual baselines after the first real UI (needs Docker), size budgets, and the `CLAUDE.md` description.
 
 ## Never
 
-- Merge the PR, delete repos, or change settings on any repo except the one just created.
+- Merge a PR, delete repos, or change settings on any repo except the one just created. The only other change allowed is the `repos.txt` line in `standards`, through a PR.
 - Create a private repo, or apply settings to a repo the user did not just ask for.
 - Weaken a guardrail (coverage, size, lint, the pinned Playwright tag) to make a check pass; report the failure and ask.
 - Retry a failed command unchanged. Read the exit code and output, then act.
