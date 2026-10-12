@@ -347,3 +347,8 @@ if [ "$DRIFT" -gt 0 ] || [ "$FAIL" = 1 ]; then
   exit 1
 fi
 echo "result: no drift"
+
+bad_unquoted() {
+  local dir=$1
+  rm -rf $dir/cache
+}
