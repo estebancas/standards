@@ -12,7 +12,7 @@ Lessons from building the reference (`weekly-routine`), the settings script and 
 - **Strict required checks make other open PRs "behind"** after every merge, so expect rebases.
 - **Branch protection on the Free plan is public-only**, and it is the same for a personal account or an organization. The script refuses private repos.
 - **Org rulesets are not enforced on a Free organization**, so an org is not worth it only for Dependabot defaults. Settings stay per repo, through the script.
-- **Admins can push to a protected `main`** while `enforce_admins` is off. That is deliberate for a solo owner, and it is how the first commit after the settings are applied still goes in.
+- **Admins can push to a protected `main`** while `enforce_admins` is off. That is deliberate for a solo owner, and it is how the first commit after the settings are applied still goes in. The exception is a repo with the `CodeQL alerts` ruleset: it has no bypass and a code scanning rule cannot be met by a direct push, so there every change goes through a pull request. To push directly anyway, delete the ruleset first and run `apply` afterwards to restore it.
 
 ## CI
 
