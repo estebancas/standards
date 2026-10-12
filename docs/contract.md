@@ -90,7 +90,8 @@ reaches a project only when its owner merges that bump, after the project's own 
 - **To release:** rename `Unreleased` in `CHANGELOG.md` to the new version, commit, tag that
   commit, and push the tag. Then consumers get a Dependabot PR.
 - Docs, the settings script and the skill can change on `main` without a tag. Only workflow
-  changes need a release.
+  changes need a release. Every change still goes through a pull request (see Checks on this
+  repo).
 
 ## Drift detection
 
@@ -129,6 +130,25 @@ checks stay as they are. Making any of them a required check needs a contract ch
   `docs/gotchas.md`.
 - **The tools are pinned.** zizmor by action SHA and `version`, actionlint and gitleaks by release
   URL and sha256 in `lint.yml`. A new version is a `lint.yml` change and a new release.
+
+## Checks on this repo
+
+`standards` checks itself with `.github/workflows/ci.yml` on every pull request and push to
+`main`. The four job names are its required contexts, set with
+`apply-repo-settings.sh apply estebancas/standards --no-environment --checks "actionlint,zizmor,shellcheck,gitleaks"`.
+They are not part of the consumer six above.
+
+| Context | What it checks |
+| --- | --- |
+| `actionlint` | The reusable workflows and `ci.yml`: syntax, expressions, shellcheck on `run:` blocks. |
+| `zizmor` | The same files, default persona, with the online audits. |
+| `shellcheck` | `scripts/apply-repo-settings.sh` (it targets Bash 3.2). |
+| `gitleaks` | The history of the checked-out commit. |
+
+- **`main` needs a pull request**, with all four checks green and the branch up to date. The
+  `CodeQL alerts` ruleset has no bypass, so even the admin cannot push straight to `main`.
+- **The tools are pinned** the same way as in `lint.yml`: release URL and sha256, or action SHA.
+- There is no dependency audit, because the repo has no npm dependencies.
 
 ## Deferred
 

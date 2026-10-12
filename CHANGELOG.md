@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `standards` now checks itself: `ci.yml` runs actionlint, zizmor, shellcheck and gitleaks on every pull request, and `main` is protected with those four as required checks (`docs/contract.md`, "Checks on this repo").
+- `apply-repo-settings.sh` uses plain if/else where shellcheck flagged `A && B || C` (no behaviour change).
+
 ## v1.1.0
 
 - `lint.yml` runs zizmor, actionlint and gitleaks (new optional inputs `workflow-checks` and `secret-scan`, both on by default). No required check name changes. The job now checks out the full history for gitleaks and every checkout sets `persist-credentials: false`.
