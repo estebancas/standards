@@ -38,12 +38,12 @@ scripts/apply-repo-settings.sh apply  <owner>/<name>
 scripts/apply-repo-settings.sh verify <owner>/<name>   # must exit 0
 ```
 
-This sets branch protection with the six required checks, Actions with SHA pinning, vulnerability alerts, Dependabot security updates, secret scanning with push protection, and the `production` environment. See `docs/contract.md` for the exact list.
+This sets branch protection with the six required checks, Actions with SHA pinning, vulnerability alerts, Dependabot security updates, secret scanning with push protection, CodeQL default setup with the `CodeQL alerts` ruleset (it blocks merging while a high or critical alert is open), and the `production` environment. See `docs/contract.md` for the exact list.
 
 ## 4. Prove it with a first PR
 
 Open a branch (for example `chore/first-change`) with a trivial change and a PR. All six checks should go green:
-`Lint / lint`, `Unit tests + build / test`, `Mutation testing / mutation`, `Bundle size / size`, `Dependency audit / audit`, `End-to-end / e2e`.
+`Lint / lint`, `Unit tests + build / test`, `Mutation testing / mutation`, `Bundle size / size`, `Dependency audit / audit`, `End-to-end / e2e`. The six names do not change when the extra checks are on: zizmor, actionlint and gitleaks run inside `Lint / lint`, and CodeQL reports separately.
 
 ## 5. Manual follow-ups
 
@@ -53,6 +53,7 @@ The script and the template cannot do these:
 - **Visual baselines.** The committed ones belong to the starter counter. After the first real UI, run `npm run e2e:visual -- --update-snapshots` (needs Docker running) and commit `e2e/__screenshots__/**`.
 - **Size budgets.** After the first real build, set each limit in `.size-limit.json` to the measured size plus about 10%.
 - **PWA identity.** Set the manifest names and colours in `vite.config.ts`, replace `public/icon.svg`, and run `npm run generate-icons:docker` (needs Docker; macOS output differs from CI for the 64px icon). Commit what it changes in `public/`.
+- **Findings.** If zizmor, actionlint, gitleaks or CodeQL flags something, fix it, or suppress it with a written reason (how is in the "Extra checks" section of `docs/gotchas.md`). A CodeQL false positive is dismissed on the Security tab.
 - **Docs.** Fill in "What this is" and "Architecture" in `CLAUDE.md`.
 
 ## Keeping a project current
