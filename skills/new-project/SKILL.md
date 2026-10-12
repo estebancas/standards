@@ -67,3 +67,5 @@ Run from the parent directory:
 ## If a check fails on the first PR
 
 Read the failing job's log (`gh run view --log-failed`), match it against `docs/gotchas.md`, and report the cause and a proposed fix. The template's own CI is green, so a failure here usually means a change made in step 2.
+
+A `Lint / lint` failure can also come from zizmor, actionlint or gitleaks (the step name in the log says which). Read the "Extra checks" section of `docs/gotchas.md`, propose a fix, and never add a suppression without asking the user. A CodeQL alert blocks the merge through the `CodeQL alerts` ruleset, not through one of the six checks.
