@@ -1,0 +1,2 @@
+api_key: "k3J9xQ2mZpL7vN4sT8wYb1RcHe5GdUa6Xo0F"
+client_secret: "Zr4Tq8Lw2Yn6Vb1Mc9Kd3Hs7Jf5Pg0Xa"
