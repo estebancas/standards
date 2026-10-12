@@ -21,6 +21,7 @@ WARN_DAYS=30
 BAD=""
 CHECKED=0
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+FENCE=$(printf '\140\140\140') # three backticks: a Markdown code fence for the run summary
 
 set -f # repo options are split on spaces; never expand globs in them
 while IFS= read -r line || [ -n "$line" ]; do
@@ -38,7 +39,7 @@ while IFS= read -r line || [ -n "$line" ]; do
   else
     printf 'DRIFT  %s (verify exited %s)\n%s\n\n' "$repo" "$code" "$out"
     BAD="$BAD $repo"
-    printf '### %s\n\n```\n%s\n```\n\n' "$repo" "$out" >>"$SUMMARY"
+    printf '### %s\n\n%s\n%s\n%s\n\n' "$repo" "$FENCE" "$out" "$FENCE" >>"$SUMMARY"
   fi
 done <"$LIST"
 set +f
