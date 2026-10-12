@@ -1,13 +1,14 @@
 name: Bad actionlint
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      node-version-file:
+        type: string
+        default: .nvmrc
 permissions:
   contents: read
 jobs:
   bad:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-          fetch-detph: 0
+      - run: echo "${{ inputs.node-verson-file }}"
