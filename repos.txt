@@ -7,3 +7,4 @@
 estebancas/weekly-routine
 estebancas/template-pwa
 estebancas/standards --no-environment --checks actionlint,zizmor,shellcheck,gitleaks
+estebancas/gua --environment release --checks lint-and-test,package,types
